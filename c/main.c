@@ -23,6 +23,7 @@
 #define MS_FULL_LEN (MS_PREAMBLE_US + MS_LONG_MSG_BITS)
 #define MS_LONG_MSG_BYTES (MS_LONG_MSG_BITS / 8)
 #define MS_SHORT_MSG_BYTES (MS_SHORT_MSG_BYTES / 8)
+#define MS_FULL_DATA_LEN MS_DATA_LEN + (MS_FULL_LEN - 1) * 4
 
 #define UNUSED(v) ((void) v)
 
@@ -53,7 +54,7 @@ void msinit(void) {
     rtl.enable_agc = 0;
     rtl.freq = MS_FREQ;
 
-    rtl.data_len = MS_DATA_LEN + (MS_FULL_LEN - 1) * 4;
+    rtl.data_len = MS_FULL_DATA_LEN;
     rtl.data_ready = 0;
 
     if((rtl.data = malloc(rtl.data_len)) == NULL ||
@@ -180,17 +181,8 @@ void premsprocess() {
     pthread_mutex_unlock(&rtl.data_mutex);
 }
 
-struct Magptr {
-    uint16_t *data;
-    uint32_t length;
-};
-
-struct Magptr getmagd() {
-    struct Magptr d;
-    d.data = rtl.magnitude;
-    d.length = rtl.data_len / 2;
-
-    return d;
+uint16_t *getmagd() {
+    return rtl.magnitude;
 }
 
 void postmsprocess() {

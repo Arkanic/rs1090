@@ -1,18 +1,40 @@
 
-extern {
-    fn msinit();
-    fn msinitrtlsdr();
+struct Magptr {
+    data:&'static u16,
+    length:u32
 }
 
-fn init() {
-    unsafe {
-        msinit();
-        msinitrtlsdr();
-    }
+extern {
+    fn start();
+
+    fn threadready() -> i32;
+    fn getmagd() -> Magptr;
+
+    fn premsprocess();
+    fn postmsprocess();
 }
 
 fn main() {
-    init();
+    unsafe {
+        start();
+    }
 
-    println!("t");
+    loop {
+        unsafe {
+            if threadready() == 0 {continue};
+        }
+
+        let mut data = Magptr {
+            data: &0,
+            length:0
+        };
+
+        unsafe {
+            premsprocess();
+            data = getmagd();
+            postmsprocess();
+        }
+
+        println!("d: {}\nl: {}", data.data, data.length);
+    }
 }

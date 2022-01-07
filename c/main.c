@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -137,4 +138,61 @@ void *rtentryp(void *arg) {
     rtlsdr_read_async(rtl.dev, rtlsdrcb, NULL, MS_ASYNC_BUF_NUM, MS_DATA_LEN);
 
     return NULL;
+}
+
+void cmpmv(void) {
+    uint16_t *m = rtl.magnitude;
+    unsigned char *p = rtl.data;
+
+    for(uint32_t j = 0; j < rtl.data_len; j += 2) {
+        int i = p[j] - 127;
+        int q = p[j + 1] - 127;
+
+        if(i < 0) i = -i;
+        if(q < 0) q = -q;
+        m[j / 2] = rtl.maglut[i * 129 + q];
+    }
+}
+
+void start(void) {
+    msinit();
+    msinitrtlsdr();
+
+    pthread_create(&rtl.reader_thread, NULL, rtentryp, NULL);
+    pthread_mutex_lock(&rtl.data_mutex);
+}
+
+int threadready(void) {
+    if(!rtl.data_ready) {
+        pthread_cond_wait(&rtl.data_cond, &rtl.data_mutex);
+        return 0;
+    }
+
+    return 1;
+}
+
+void premsprocess() {
+    cmpmv();
+
+    rtl.data_ready = 0;
+    pthread_cond_signal(&rtl.data_cond);
+
+    pthread_mutex_unlock(&rtl.data_mutex);
+}
+
+struct Magptr {
+    uint16_t *data;
+    uint32_t length;
+};
+
+struct Magptr getmagd() {
+    struct Magptr d;
+    d.data = rtl.magnitude;
+    d.length = rtl.data_len / 2;
+
+    return d;
+}
+
+void postmsprocess() {
+    pthread_mutex_lock(&rtl.data_mutex);
 }

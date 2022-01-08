@@ -29,7 +29,7 @@ fn main() {
             if threadready() == 0 {continue};
         }
 
-        let data:[u16; MS_FULL_DATA_LEN as usize];
+        let data:[u16; (MS_FULL_DATA_LEN / 2) as usize];
 
         unsafe {
             premsprocess();

@@ -13,7 +13,7 @@ extern {
     fn start();
 
     fn threadready() -> i32;
-    fn getmagd() -> [u16; MS_FULL_DATA_LEN as usize];
+    fn getmagd() -> [u16; (MS_FULL_DATA_LEN / 2) as usize];
 
     fn premsprocess();
     fn postmsprocess();
